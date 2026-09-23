@@ -10,7 +10,7 @@ int main(int argc, char *argv[]){
 
     int pid = fork();
 
-    if (0 <pid){
+    if (0 > pid){
         fprintf(2, "time1: fork failed\n");
         exit(1);
     }
