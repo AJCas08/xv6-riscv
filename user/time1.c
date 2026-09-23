@@ -3,7 +3,7 @@
 
 int main(int argc, char *argv[]){
     if (argc < 2){
-        printf(2, "Usage: time1 command[args...]\n");
+        fprintf(2, "Usage: time1 command[args...]\n");
         exit(1);
     }
     uint start = uptime();
