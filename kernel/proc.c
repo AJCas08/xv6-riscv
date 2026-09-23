@@ -5,6 +5,7 @@
 #include "spinlock.h"
 #include "proc.h"
 #include "defs.h"
+#include "pstat.h"
 
 struct cpu cpus[NCPU];
 
@@ -416,6 +417,60 @@ kwait(uint64 addr)
     release(&wait_lock);
     sleep();
     acquire(&wait_lock);
+  }
+}
+
+int
+kwait2(uint64 addr, uint64 rusage_addr)
+{
+  struct proc *pp;
+  int havekids, pid;
+  struct proc *p = myproc();
+
+  acquire(&wait_lock);
+
+  for(;;){
+    havekids = 0;
+    for(pp = proc; pp < &proc[NPROC]; pp++){
+      if(pp->parent == p){
+        acquire(&pp->lock);
+        havekids = 1;
+        if(pp->state == ZOMBIE){
+          pid = pp->pid;
+
+          if(addr != 0 && copyout(p->pagetable, addr, (char *)&pp->xstate,
+                                  sizeof(pp->xstate)) < 0) {
+            release(&pp->lock);
+            release(&wait_lock);
+            return -1;
+          }
+
+          if(rusage_addr != 0){
+            struct rusage ru;
+            ru.cputime = pp->cputime;
+            if(copyout(p->pagetable, rusage_addr, (char *)&ru,
+                       sizeof(ru)) < 0) {
+              release(&pp->lock);
+              release(&wait_lock);
+              return -1;
+            }
+          }
+
+          freeproc(pp);
+          release(&pp->lock);
+          release(&wait_lock);
+          return pid;
+        }
+        release(&pp->lock);
+      }
+    }
+
+    if(!havekids || killed(p)){
+      release(&wait_lock);
+      return -1;
+    }
+
+    sleep(p, &wait_lock);
   }
 }
 
