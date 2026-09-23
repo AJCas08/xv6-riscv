@@ -451,7 +451,7 @@ kwait2(uint64 addr, uint64 rusage_addr)
               return -1;
             }
           }
-
+          pp->parent = 0;
           freeproc(pp);
           release(&pp->lock);
           release(&wait_lock);
@@ -466,7 +466,12 @@ kwait2(uint64 addr, uint64 rusage_addr)
       return -1;
     }
 
-    sleep(p, &wait_lock);
+    // Wait for a child to exit.
+    sleep_prepare(p); //DOC: wait-sleep
+    release(&wait_lock);
+    sleep();
+    acquire(&wait_lock);
+
   }
 }
 
