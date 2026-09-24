@@ -1,5 +1,6 @@
 #include "kernel/types.h"
 #include "user/user.h"
+#include "kernel/pstat.h"
 
 int main(int argc, char *argv[]){
     if (argc < 2){
@@ -20,9 +21,15 @@ int main(int argc, char *argv[]){
         fprintf(2, "time1: exec %s failed\n", argv[1]);
         exit(1);
     }else{
-        wait(0);
+        struct rusage ruse;
+        int status;
+        wait2(&status, &ruse);
+        
         uint end = uptime();
-        printf("Elapsed time: %d ticks\n", end - start);
+        uint elapsed = end - start;
+        uint cpu = ruse.cputime;
+        uint percent = elapsed > 0 ? (cpu * 100) / elapsed : 0;
+        printf("elapsed time: %d ticks, cpu time: %d ticks, %d%% CPU\n", elapsed, cpu, percent);
         exit(0);
     }
 }
