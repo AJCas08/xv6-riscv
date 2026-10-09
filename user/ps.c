@@ -1,5 +1,5 @@
-#include "kernel/param.h"
 #include "kernel/types.h"
+#include "kernel/param.h"
 #include "kernel/pstat.h"
 #include "user/user.h"
 
@@ -21,19 +21,19 @@ main(int argc, char **argv)
   if (nprocs < 0)
     exit(-1);
 
-  printf("pid\tstate\t\tsize\tppid\tname\n");
-  for (i=0; i<nprocs; i++) {
-    state = states[uproc[i].state];
-    printf("%d\t%s\t%l\t%d\t%s\n", uproc[i].pid, state,
-                   uproc[i].size, uproc[i].ppid, uproc[i].name);
-  }
+  uint now = uptime();
 
-  printf("pid\tstate\t\tsize\tppid\tprio\tname\n");
-for (i=0; i<nprocs; i++) {
-  state = states[uproc[i].state];
-  printf("%d\t%s\t%l\t%d\t%d\t%s\n", uproc[i].pid, state,
-         uproc[i].size, uproc[i].ppid, uproc[i].priority, uproc[i].name);
-}
+  printf("pid\tstate\t\tsize\tppid\tprio\tage\tname\n");
+  for (i = 0; i < nprocs; i++) {
+    state = states[uproc[i].state];
+    printf("%d\t%s\t%ld\t%d\t%d\t", uproc[i].pid, state,
+           uproc[i].size, uproc[i].ppid, uproc[i].priority);
+    if (uproc[i].state == RUNNABLE)
+      printf("%d\t", now - uproc[i].readytime);
+    else
+      printf("-\t");
+    printf("%s\n", uproc[i].name);
+  }
 
   exit(0);
 }

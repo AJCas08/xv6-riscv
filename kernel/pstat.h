@@ -16,7 +16,8 @@ struct pstat {
   int ppid;      
   // Parent command name       
   char name[16];   
-  int priority;     
+  int priority;
+  uint readytime;     
 };
 
 #endif
