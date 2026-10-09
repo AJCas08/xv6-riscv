@@ -12,7 +12,7 @@ spin(void)
 int
 main(void)
 {
-  int prios[3] = { 5, 10, 20 };
+  int prios[3] = { 10, 10, 10 };
 
   for(int i = 0; i < 3; i++){
     int pid = fork();
