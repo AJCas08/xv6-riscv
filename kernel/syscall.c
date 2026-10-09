@@ -136,6 +136,8 @@ static uint64 (*syscalls[])(void) = {
   [SYS_sync]    = sys_sync,
   [SYS_wait2]   = sys_wait2,
   [SYS_getprocs] = sys_getprocs,
+  [SYS_getpriority] sys_getpriority,
+  [SYS_setpriority] sys_setpriority,
   // clang-format on
 };
 
