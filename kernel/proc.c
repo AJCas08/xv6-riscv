@@ -126,6 +126,8 @@ found:
   p->pid = allocpid();
   p->state = USED;
   p->cputime = 0;
+  // default
+  p->priority = 10;
 
   // Allocate a trapframe page.
   if ((p->trapframe = (struct trapframe *)kalloc()) == 0) {
@@ -276,6 +278,7 @@ kfork(void)
     return -1;
   }
   np->sz = p->sz;
+  np->priority = p->priority;
 
   // copy saved user registers.
   *(np->trapframe) = *(p->trapframe);
@@ -755,4 +758,37 @@ procdump(void)
     printk("%d %s %s", p->pid, state, p->name);
     printk("\n");
   }
+}
+
+int kgetprocs(uint64 addr)
+{
+  struct proc *p;
+  struct proc *me = myproc();
+  struct pstat ps;
+  int count = 0;
+
+  acquire(&wait_lock);   // protects p->parent
+  for(p = proc; p < &proc[NPROC]; p++){
+    acquire(&p->lock);
+    if(p->state != UNUSED){
+      ps.pid = p->pid;
+      ps.state = p->state;
+      ps.size = p->sz;
+      ps.ppid = p->parent ? p->parent->pid : 0;
+      safestrcpy(ps.name, p->name, sizeof(ps.name));
+      ps.priority = p->priority;
+      
+      if(copyout(me->pagetable, me->sz,
+                 addr + count * sizeof(struct pstat),
+                 (char *)&ps, sizeof(ps)) < 0){
+        release(&p->lock);
+        release(&wait_lock);
+        return -1;
+      }
+      count++;
+    }
+    release(&p->lock);
+  }
+  release(&wait_lock);
+  return count;
 }

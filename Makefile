@@ -155,6 +155,8 @@ UPROGS=\
 	$U/_matmul\
 	$U/_sleep\
 	$U/_time\
+	$U/_ps\
+	$U/_prio\
 
 fs.img: mkfs/mkfs README $(UPROGS)
 	mkfs/mkfs fs.img README $(UPROGS)

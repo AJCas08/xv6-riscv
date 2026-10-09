@@ -108,10 +108,8 @@ sys_kill(void)
   return kkill(pid);
 }
 
-// return how many clock tick interrupts have occurred
-// since start.
-uint64
-sys_uptime(void)
+// return how many clock tick interrupts have occurred since start.
+uint64 sys_uptime(void)
 {
   uint xticks;
 
@@ -119,4 +117,37 @@ sys_uptime(void)
   xticks = ticks;
   release(&tickslock);
   return xticks;
+}
+
+uint64 sys_getprocs(void)
+{
+  uint64 addr;
+  argaddr(0, &addr);
+  return kgetprocs(addr);
+}
+
+uint64 sys_getpriority(void)
+{
+  struct proc *p = myproc();
+  int prio;
+
+  acquire(&p->lock);
+  prio = p->priority;
+  release(&p->lock);
+  return prio;
+}
+
+uint64 sys_setpriority(void)
+{
+  int n;
+  struct proc *p = myproc();
+
+  argint(0, &n);
+  if(n < 0)            
+    return -1;
+
+  acquire(&p->lock);
+  p->priority = n;
+  release(&p->lock);
+  return 0;
 }
