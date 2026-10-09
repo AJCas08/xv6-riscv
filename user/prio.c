@@ -17,11 +17,11 @@ main(int argc, char *argv[])
     printf("child inherited priority: %d\n", getpriority());
     setpriority(7);
     // stay alive so ps can see us
-    sleep(10);          
+    pause(10);          
     exit(0);
   }
   // give the child time to set its priority
-  sleep(10);             
+  pause(10);             
   char *args[] = { "ps", 0 };
   if(fork() == 0){
     exec("ps", args);
