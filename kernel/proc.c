@@ -128,6 +128,7 @@ found:
   p->cputime = 0;
   // default
   p->priority = 10;
+  p->readytime = 0;
 
   // Allocate a trapframe page.
   if ((p->trapframe = (struct trapframe *)kalloc()) == 0) {
