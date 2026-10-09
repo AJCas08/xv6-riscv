@@ -504,6 +504,35 @@ scheduler(void)
     intr_off();
 
     int found = 0;
+
+  #if SCHEDPOLICY == SCHED_PRIORITY
+    struct proc *best = 0;
+
+    for (p = proc; p < &proc[NPROC]; p++) {
+      acquire(&p->lock);
+      if (p->state == RUNNABLE &&
+          (best == 0 || p->priority > best->priority)) {
+        if (best)
+          release(&best->lock);   // drop the previous winner
+        best = p;                 // keep p's lock held
+      } else {
+        release(&p->lock);
+      }
+    }
+
+    if (best) {
+      best->state = RUNNING;
+      c->proc = best;
+      swtch(&c->context, &best->context);
+
+      // Don't re-enable interrupts on release.
+      mycpu()->intena = 0;
+
+      c->proc = 0;
+      found = 1;
+      release(&best->lock);
+    }
+  #else   
     for (p = proc; p < &proc[NPROC]; p++) {
       acquire(&p->lock);
       if (p->state == RUNNABLE) {
@@ -524,6 +553,7 @@ scheduler(void)
       }
       release(&p->lock);
     }
+  #endif
     if (found == 0) {
       // nothing to run; stop running on this core until an interrupt.
       asm volatile("wfi");
