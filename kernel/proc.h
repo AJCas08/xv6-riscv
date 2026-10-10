@@ -92,6 +92,9 @@ struct proc {
   int cputime;          //Number of ticks this process has used
   int priority;         //Scheduling Priority
   uint readytime;       // tick when the process last became RUNNABLE
+  int boost;      // aging bonus added to priority
+  int waited;     // ticks spent RUNNABLE since the last boost
+  int ran;        // ticks spent RUNNING since the last decay
 
   // wait_lock must be held when using this:
   struct proc *parent; // Parent process

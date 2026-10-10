@@ -174,6 +174,7 @@ clockintr()
     ticks++;
     wakeup(&ticks);
     release(&tickslock);
+    ageprocs(); 
   }
 
   // ask for the next timer interrupt. this also clears

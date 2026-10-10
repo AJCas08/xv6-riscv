@@ -126,6 +126,9 @@ found:
   p->pid = allocpid();
   p->state = USED;
   p->cputime = 0;
+  p->boost = 0;
+  p->waited = 0;
+  p->ran = 0;
   // default
   p->priority = 10;
   p->readytime = 0;
@@ -480,6 +483,38 @@ kwait2(uint64 addr, uint64 rusage_addr)
   }
 }
 
+// Called once per tick (from clockintr) to update aging state.
+void
+ageprocs(void)
+{
+#if AGING
+  struct proc *p;
+
+  for(p = proc; p < &proc[NPROC]; p++){
+    acquire(&p->lock);
+    if(p->state == RUNNABLE){
+      if(++p->waited >= AGING_INTERVAL){
+        p->waited = 0;
+        p->boost++;
+      }
+    } else if(p->state == RUNNING){
+      if(++p->ran >= AGING_INTERVAL){
+        p->ran = 0;
+        if(p->boost > 0)
+          p->boost--;
+      }
+    }
+    release(&p->lock);
+  }
+#endif
+}
+
+#if AGING
+#define EFFPRIO(p) ((p)->priority + (p)->boost)
+#else
+#define EFFPRIO(p) ((p)->priority)
+#endif
+
 // Per-CPU process scheduler.
 // Each CPU calls scheduler() after setting itself up.
 // Scheduler never returns.  It loops, doing:
@@ -511,7 +546,7 @@ scheduler(void)
     for (p = proc; p < &proc[NPROC]; p++) {
       acquire(&p->lock);
       if (p->state == RUNNABLE &&
-          (best == 0 || p->priority > best->priority)) {
+      (best == 0 || EFFPRIO(p) > EFFPRIO(best))) {
         if (best)
           release(&best->lock);   // drop the previous winner
         best = p;                 // keep p's lock held

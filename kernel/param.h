@@ -15,3 +15,5 @@
 #define SCHED_RR        0             // round robin (original)
 #define SCHED_PRIORITY  1             // highest priority first
 #define SCHEDPOLICY     SCHED_PRIORITY   
+#define AGING            1    // 1 = aging on, 0 = off (for comparison runs)
+#define AGING_INTERVAL   10   // ticks
