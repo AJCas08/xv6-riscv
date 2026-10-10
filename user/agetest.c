@@ -20,52 +20,52 @@ spin(int n)              // n = millions of iterations
 void
 spawn(int prio, int work)
 {
-  setpriority(prio);               // child inherits this
-  uint born = uptime();
-  int pid = fork();
-  if(pid < 0){
-    fprintf(2, "fork failed\n");
-    exit(1);
-  }
-  if(pid == 0){
-    int rec[3];
-    rec[0] = prio;
-    rec[1] = uptime() - born;      // response time: arrival -> first run
-    spin(work);
-    rec[2] = uptime() - born;      // turnaround time: arrival -> finish
-    write(fds[1], rec, sizeof(rec));
-    exit(0);
-  }
-  setpriority(30);                 // parent returns to top priority
+    setpriority(prio);               // child inherits this
+    uint born = uptime();
+    int pid = fork();
+    if(pid < 0){
+        fprintf(2, "fork failed\n");
+        exit(1);
+    }
+    if(pid == 0){
+        int rec[3];
+        rec[0] = prio;
+        rec[1] = uptime() - born;      // response time: arrival -> first run
+        spin(work);
+        rec[2] = uptime() - born;      // turnaround time: arrival -> finish
+        write(fds[1], rec, sizeof(rec));
+        exit(0);
+    }
+    setpriority(30);                 // parent returns to top priority
 }
 
 int
-main(void)
-{
-  int n = NHIGH + 1;
-  int rec[3], i;
-  int sumresp = 0, sumturn = 0;
+main(void){
+    int n = NHIGH + 1;
+    int rec[3], i;
+    int sumresp = 0, sumturn = 0;
 
-  pipe(fds);
-  setpriority(30);
+    pipe(fds);
+    setpriority(30);
 
-  spawn(5, LOWWORK);               // the process that might starve
-  for(i = 0; i < NHIGH; i++){
-    spawn(20, HIGHWORK);
-    pause(GAP);
-  }
+    spawn(5, HIGHWORK);              // was 20
+    spawn(1, LOWWORK);               // was 5
+    for(i = 0; i < NHIGH; i++){
+        spawn(5, HIGHWORK);            // was 20
+        pause(GAP);
+    }
 
-  for(i = 0; i < n; i++){
-    read(fds[0], rec, sizeof(rec));
-    if(rec[0] == 5)
-      printf("LOW  (prio 5): response %d, turnaround %d\n", rec[1], rec[2]);
-    sumresp += rec[1];
-    sumturn += rec[2];
-  }
-  for(i = 0; i < n; i++)
-    wait(0);
+    for(i = 0; i < n; i++){
+        read(fds[0], rec, sizeof(rec));
+        if(rec[0] == 1)
+            printf("LOW  (prio 1): response %d, turnaround %d\n", rec[1], rec[2]);
+        sumresp += rec[1];
+        sumturn += rec[2];
+    }
+    for(i = 0; i < n; i++)
+        wait(0);
 
-  printf("average response %d, average turnaround %d (%d procs)\n",
-         sumresp / n, sumturn / n, n);
-  exit(0);
+    printf("average response %d, average turnaround %d (%d procs)\n",
+            sumresp / n, sumturn / n, n);
+    exit(0);
 }
