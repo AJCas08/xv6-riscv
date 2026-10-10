@@ -3,8 +3,8 @@
 
 #define NHIGH     10
 #define GAP       15
-#define HIGHWORK  100          // 100 million iterations
-#define LOWWORK   100
+#define HIGHWORK  850
+#define LOWWORK   850
 
 int fds[2];
 
