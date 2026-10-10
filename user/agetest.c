@@ -1,10 +1,10 @@
 #include "kernel/types.h"
 #include "user/user.h"
 
-#define NHIGH     20
-#define GAP       15           // ticks between high-priority arrivals
-#define HIGHWORK  20000000     // tune: about 20 ticks of CPU each
-#define LOWWORK   60000000     // tune: about 60 ticks of CPU
+#define NHIGH     10
+#define GAP       15
+#define HIGHWORK  100          // 100 million iterations
+#define LOWWORK   100
 
 int fds[2];
 
@@ -41,7 +41,7 @@ spawn(int prio, int work)
 
 int
 main(void){
-    int n = NHIGH + 1;
+    int n = NHIGH + 2;
     int rec[3], i;
     int sumresp = 0, sumturn = 0;
 
