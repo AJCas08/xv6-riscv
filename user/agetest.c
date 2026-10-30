@@ -39,12 +39,15 @@ spawn(int prio, int work)
     int rec[3];
     uint started = uptime();
 
-    printf("START: PID %d | Priority %d | Waited %d ticks\n",
-           getpid(), prio, started - born);
+    printf("START: PID %d | Priority %d | Tick %d\n",
+           getpid(), prio, started);
 
     spin(work);
 
     uint done = uptime();
+
+    printf("FINISH: PID %d | Priority %d | Tick %d\n",
+           getpid(), prio, done);
 
     rec[0] = prio;
     rec[1] = started - born;
@@ -77,7 +80,7 @@ monitor(int lowpid)
       exit(0);
 
     if(low->state == RUNNABLE){
-      printf("AGING: LOW PID %d | Aged %d ticks\n",
+      printf("AGING: LOW PID %d | %d ticks\n",
              lowpid, now - low->readytime);
     }
 
