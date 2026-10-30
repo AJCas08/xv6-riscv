@@ -118,11 +118,12 @@ uint64 sys_uptime(void)
   release(&tickslock);
   return xticks;
 }
-
+//Read Pointer arguments
 uint64 sys_getprocs(void)
 {
   uint64 addr;
   argaddr(0, &addr);
+  //returns Process 
   return kgetprocs(addr);
 }
 

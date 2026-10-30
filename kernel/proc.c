@@ -836,8 +836,9 @@ int kgetprocs(uint64 addr)
   struct proc *me = myproc();
   struct pstat ps;
   int count = 0;
-
+  //Wait_lock must be held 
   acquire(&wait_lock);   // protects p->parent
+
   for(p = proc; p < &proc[NPROC]; p++){
     acquire(&p->lock);
     if(p->state != UNUSED){
@@ -849,6 +850,7 @@ int kgetprocs(uint64 addr)
       ps.priority = p->priority;
       ps.readytime = p->readytime;
 
+      //Copy entry to user space array
       if(copyout(me->pagetable, me->sz,
                  addr + count * sizeof(struct pstat),
                  (char *)&ps, sizeof(ps)) < 0){
@@ -856,6 +858,7 @@ int kgetprocs(uint64 addr)
         release(&wait_lock);
         return -1;
       }
+      //Advance to next slot once entry written successfully
       count++;
     }
     release(&p->lock);
