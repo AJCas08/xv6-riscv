@@ -4,15 +4,14 @@
 #include "kernel/pstat.h"
 #include "user/user.h"
 
-#define NHIGH     10
-#define GAP       15
-#define SAMPLE    10
-#define HIGHWORK  850
-#define LOWWORK   850
-#define HIGHPRIO  5
-#define LOWPRIO   1
+#define NPROC_TEST  10
+#define SAMPLE      10
+#define WORK        850
 
 int fds[2];
+
+int pids[NPROC_TEST];
+int priorities[NPROC_TEST];
 
 void
 spin(int n)
@@ -28,6 +27,7 @@ spawn(int prio, int work)
 {
   setpriority(prio);
   uint born = uptime();
+
   int pid = fork();
 
   if(pid < 0){
@@ -62,26 +62,24 @@ spawn(int prio, int work)
 }
 
 void
-monitor(int lowpid)
+monitor(void)
 {
   struct pstat ps[NPROC];
 
   for(;;){
     int n = getprocs(ps);
-    uint now = uptime();
-    struct pstat *low = 0;
 
-    for(int i = 0; i < n; i++){
-      if(ps[i].pid == lowpid)
-        low = &ps[i];
-    }
+    for(int p = 0; p < NPROC_TEST; p++){
+      for(int i = 0; i < n; i++){
+        if(ps[i].pid == pids[p] &&
+           ps[i].state == RUNNABLE){
 
-    if(low == 0 || low->state == ZOMBIE)
-      exit(0);
+          uint age = uptime() - ps[i].readytime;
 
-    if(low->state == RUNNABLE){
-      printf("AGING: LOW PID %d | %d ticks\n",
-             lowpid, now - low->readytime);
+          printf("AGING: PID %d | Priority %d | %d ticks\n",
+                 pids[p], priorities[p], age);
+        }
+      }
     }
 
     pause(SAMPLE);
@@ -91,17 +89,24 @@ monitor(int lowpid)
 int
 main(void)
 {
-  int n = NHIGH + 2;
-  int rec[3], i, lowpid, monpid;
+  int rec[3];
+  int i, monpid;
   int sumresp = 0, sumturn = 0;
+
+  int testpriorities[NPROC_TEST] = {
+    1, 2, 3, 4, 5, 1, 2, 3, 4, 5
+  };
 
   pipe(fds);
   setpriority(30);
 
-  printf("\n=== AGING TEST STARTED ===\n\n");
+  printf("\n=== PRIORITY AGING TEST ===\n\n");
 
-  spawn(HIGHPRIO, HIGHWORK);
-  lowpid = spawn(LOWPRIO, LOWWORK);
+  // Create processes with different priorities.
+  for(i = 0; i < NPROC_TEST; i++){
+    priorities[i] = testpriorities[i];
+    pids[i] = spawn(testpriorities[i], WORK);
+  }
 
   monpid = fork();
 
@@ -111,16 +116,12 @@ main(void)
   }
 
   if(monpid == 0){
-    monitor(lowpid);
+    monitor();
     exit(0);
   }
 
-  for(i = 0; i < NHIGH; i++){
-    spawn(HIGHPRIO, HIGHWORK);
-    pause(GAP);
-  }
-
-  for(i = 0; i < n; i++){
+  // Collect process results.
+  for(i = 0; i < NPROC_TEST; i++){
     if(read(fds[0], rec, sizeof(rec)) != sizeof(rec)){
       fprintf(2, "pipe read failed\n");
       exit(1);
@@ -132,13 +133,15 @@ main(void)
 
   kill(monpid);
 
-  for(i = 0; i < n + 1; i++)
+  for(i = 0; i < NPROC_TEST + 1; i++)
     wait(0);
 
   printf("\n=== FINAL RESULTS ===\n");
-  printf("Average response: %d ticks\n", sumresp / n);
-  printf("Average turnaround: %d ticks\n", sumturn / n);
-  printf("Processes tested: %d\n", n);
+  printf("Average response: %d ticks\n",
+         sumresp / NPROC_TEST);
+  printf("Average turnaround: %d ticks\n",
+         sumturn / NPROC_TEST);
+  printf("Processes tested: %d\n", NPROC_TEST);
 
   exit(0);
 }
