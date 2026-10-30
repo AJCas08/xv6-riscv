@@ -39,15 +39,9 @@ spawn(int prio, int work)
     int rec[3];
     uint started = uptime();
 
-    printf("Process started: priority %d, wait %d ticks\n",
-           prio, started - born);
-
     spin(work);
 
     uint done = uptime();
-
-    printf("Process finished: priority %d, turnaround %d ticks\n",
-           prio, done - born);
 
     rec[0] = prio;
     rec[1] = started - born;
@@ -84,7 +78,7 @@ monitor(int lowpid)
       exit(0);
 
     if(low->state == RUNNABLE){
-      printf("LOW: waiting %d ticks | High-priority jobs waiting: %d\n",
+      printf("LOW waiting: %d | HIGH waiting: %d\n",
              now - low->readytime, waiting);
     }
 
@@ -125,12 +119,9 @@ main(void)
   }
 
   for(i = 0; i < n; i++){
-    read(fds[0], rec, sizeof(rec));
-
-    if(rec[0] == LOWPRIO){
-      printf("\nLOW-PRIORITY RESULTS:\n");
-      printf("Response time: %d ticks\n", rec[1]);
-      printf("Turnaround time: %d ticks\n\n", rec[2]);
+    if(read(fds[0], rec, sizeof(rec)) != sizeof(rec)){
+      fprintf(2, "pipe read failed\n");
+      exit(1);
     }
 
     sumresp += rec[1];
@@ -142,10 +133,10 @@ main(void)
   for(i = 0; i < n + 1; i++)
     wait(0);
 
-  printf("=== FINAL RESULTS ===\n");
-  printf("Average response time: %d ticks\n", sumresp / n);
-  printf("Average turnaround time: %d ticks\n", sumturn / n);
-  printf("Total processes: %d\n", n);
+  printf("\n=== AGING TEST RESULTS ===\n");
+  printf("Avg response: %d ticks\n", sumresp / n);
+  printf("Avg turnaround: %d ticks\n", sumturn / n);
+  printf("Processes tested: %d\n", n);
 
   exit(0);
 }
