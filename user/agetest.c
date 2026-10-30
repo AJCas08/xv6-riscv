@@ -39,6 +39,9 @@ spawn(int prio, int work)
     int rec[3];
     uint started = uptime();
 
+    printf("START: PID %d | Priority %d | Waited %d ticks\n",
+           getpid(), prio, started - born);
+
     spin(work);
 
     uint done = uptime();
@@ -64,22 +67,18 @@ monitor(int lowpid)
     int n = getprocs(ps);
     uint now = uptime();
     struct pstat *low = 0;
-    int waiting = 0;
 
     for(int i = 0; i < n; i++){
       if(ps[i].pid == lowpid)
         low = &ps[i];
-      else if(ps[i].state == RUNNABLE &&
-              ps[i].priority == HIGHPRIO)
-        waiting++;
     }
 
     if(low == 0 || low->state == ZOMBIE)
       exit(0);
 
     if(low->state == RUNNABLE){
-      printf("LOW waiting: %d | HIGH waiting: %d\n",
-             now - low->readytime, waiting);
+      printf("AGING: LOW PID %d | Aged %d ticks\n",
+             lowpid, now - low->readytime);
     }
 
     pause(SAMPLE);
@@ -133,9 +132,9 @@ main(void)
   for(i = 0; i < n + 1; i++)
     wait(0);
 
-  printf("\n=== AGING TEST RESULTS ===\n");
-  printf("Avg response: %d ticks\n", sumresp / n);
-  printf("Avg turnaround: %d ticks\n", sumturn / n);
+  printf("\n=== FINAL RESULTS ===\n");
+  printf("Average response: %d ticks\n", sumresp / n);
+  printf("Average turnaround: %d ticks\n", sumturn / n);
   printf("Processes tested: %d\n", n);
 
   exit(0);
