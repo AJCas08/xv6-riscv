@@ -80,17 +80,18 @@ monitor(int lowpid)
       else if(ps[i].state == RUNNABLE && ps[i].priority == HIGHPRIO)
         waiting++;
     }
+
     if(low == 0)
       exit(0);
 
-    printf("tick %d: LOW %s base %d boost %d effective %d age %d | %d high jobs waiting\n",
-           now, states[low->state], low->priority, low->boost,
-           low->priority + low->boost,
+    printf("tick %d: LOW %s priority %d age %d | %d high jobs waiting\n",
+           now, states[low->state], low->priority,
            low->state == RUNNABLE ? now - low->readytime : 0,
            waiting);
 
     if(low->state == ZOMBIE)
       exit(0);
+
     pause(SAMPLE);
   }
 }
