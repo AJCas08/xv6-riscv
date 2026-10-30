@@ -33,6 +33,8 @@ spawn(int prio, int work)
         rec[1] = uptime() - born;      // response time: arrival -> first run
         spin(work);
         rec[2] = uptime() - born;      // turnaround time: arrival -> finish
+        printf("child with priority %d finished at tick %d\n",
+             prio, uptime());
         write(fds[1], rec, sizeof(rec));
         exit(0);
     }
@@ -59,6 +61,7 @@ main(void){
         read(fds[0], rec, sizeof(rec));
         if(rec[0] == 1)
             printf("LOW  (prio 1): response %d, turnaround %d\n", rec[1], rec[2]);
+            
         sumresp += rec[1];
         sumturn += rec[2];
     }
